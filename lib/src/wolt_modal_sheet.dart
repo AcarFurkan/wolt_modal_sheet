@@ -1107,6 +1107,12 @@ class WoltModalSheetState extends State<WoltModalSheet> {
     }
   }
 
+  void updateCurrentPage(SliverWoltModalSheetPage newPage) {
+    setState(() {
+      _pages[_currentPageIndex] = newPage;
+    });
+  }
+
   /// Replaces the current page in the modal sheet stack with a new page.
   ///
   /// This method updates the navigation stack by replacing the current page with a new

@@ -54,6 +54,9 @@ class SheetPageWithDynamicPageProperties {
                               dynamicPageModel.value.copyWith(
                             enableDrag: newValue,
                           );
+                          WoltModalSheet.of(context).updateCurrentPage(
+                              SheetPageWithDynamicPageProperties.build(
+                                  context));
                           setState(() =>
                               useOriginalPageValues = !useOriginalPageValues);
                         },
