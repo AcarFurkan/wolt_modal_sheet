@@ -7,7 +7,8 @@ class WoltModalSheetRoute<T> extends PageRoute<T> {
   WoltModalSheetRoute({
     required this.pageListBuilderNotifier,
     this.pageIndexNotifier,
-    this.decorator,
+    this.pageContentDecorator,
+    this.modalDecorator,
     this.onModalDismissedWithBarrierTap,
     this.onModalDismissedWithDrag,
     this.modalBarrierColor,
@@ -17,16 +18,22 @@ class WoltModalSheetRoute<T> extends PageRoute<T> {
     bool? useSafeArea,
     bool? barrierDismissible,
     AnimationController? transitionAnimationController,
-    RouteSettings? routeSettings,
+    RouteSettings? settings,
   })  : _enableDrag = enableDrag,
         _showDragHandle = showDragHandle,
         _useSafeArea = useSafeArea ?? true,
         _transitionAnimationController = transitionAnimationController,
         _barrierDismissible = barrierDismissible,
         _modalTypeBuilder = modalTypeBuilder,
-        super(settings: routeSettings);
+        super(settings: settings);
 
-  Widget Function(Widget)? decorator;
+  /// Applies additional decorations to the modal page content excluding the
+  /// barrier. Use [modalDecorator] to apply decorations to the barrier and
+  /// the content.
+  Widget Function(Widget)? pageContentDecorator;
+
+  /// Applies additional decorations to the modal including the barrier and the content.
+  Widget Function(Widget)? modalDecorator;
 
   final ValueNotifier<WoltModalSheetPageListBuilder> pageListBuilderNotifier;
 
@@ -73,7 +80,7 @@ class WoltModalSheetRoute<T> extends PageRoute<T> {
   bool get maintainState => true;
 
   @override
-  String? get barrierLabel => 'Modal barrier';
+  String get barrierLabel => 'Modal barrier';
 
   AnimationController? animationController;
 
@@ -85,7 +92,8 @@ class WoltModalSheetRoute<T> extends PageRoute<T> {
   ) {
     return WoltModalSheet(
       route: this,
-      decorator: decorator,
+      pageContentDecorator: pageContentDecorator,
+      modalDecorator: modalDecorator,
       pageIndexNotifier: pageIndexNotifier ?? ValueNotifier(0),
       pageListBuilderNotifier: pageListBuilderNotifier,
       modalTypeBuilder: _determineCurrentModalType,
@@ -107,11 +115,15 @@ class WoltModalSheetRoute<T> extends PageRoute<T> {
   ) {
     final modalType = _determineCurrentModalType(context);
     return modalType.buildTransitions(
-        context, animation, secondaryAnimation, child);
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+    );
   }
 
   @override
-  Color? get barrierColor {
+  Color get barrierColor {
     final context = navigator!.context;
     final themeData = Theme.of(context).extension<WoltModalSheetThemeData>();
     final defaultThemeData = WoltModalSheetDefaultThemeData(context);

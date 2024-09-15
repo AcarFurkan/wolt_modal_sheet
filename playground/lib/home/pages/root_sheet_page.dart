@@ -21,17 +21,14 @@ class RootSheetPage {
   static List<SliverWoltModalSheetPage> _constructAllPagesAfterRootPage(
           BuildContext context) =>
       [
-        SheetPageWithForcedMaxHeight.build(
-          Theme.of(context).brightness,
-          isLastPage: false,
-        ),
-        SheetPageWithHeroImage.build(isLastPage: false),
-        SheetPageWithLazyList.build(isLastPage: false),
-        SheetPageWithTextField.build(isLastPage: false),
-        SheetPageWithMinHeight.build(isLastPage: false),
-        SheetPageWithInAppNavigation.build(isLastPage: false),
-        SheetPageWithCustomTopBar.build(isLastPage: false),
-        SheetPageWithNoPageTitleNoTopBar.build(isLastPage: false),
+        SheetPageWithForcedMaxHeight.build(Theme.of(context).brightness),
+        SheetPageWithHeroImage.build(),
+        SheetPageWithLazyList.build(),
+        SheetPageWithTextField.build(),
+        SheetPageWithMinHeight.build(),
+        SheetPageWithInAppNavigation.build(),
+        SheetPageWithCustomTopBar.build(),
+        SheetPageWithNoPageTitleNoTopBar.build(),
         SheetPageWithUpdatePage.build(context, isLastPage: true),
       ];
 
@@ -195,7 +192,6 @@ class _AllPagesPushWidget extends StatelessWidget {
       children: [
         const Divider(),
         ListTile(
-          contentPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           trailing: const Icon(Icons.arrow_forward_ios),
           title: const Text('All the pages in one flow'),

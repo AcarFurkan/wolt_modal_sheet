@@ -125,7 +125,7 @@ abstract class WoltModalType {
     Widget child,
   );
 
-  /// Applies additional decorations to the modal pqge content.
+  /// Applies additional decorations to the modal page content.
   ///
   /// This method can be overridden to provide custom decorations such as safe area padding
   /// adjustments inside the modal page content. By default, it does not apply any decoration.
@@ -143,10 +143,6 @@ abstract class WoltModalType {
   /// This method can be overridden to provide custom decorations such as safe area padding
   /// adjustments around the modal including the barrier. By default, it applies safe area
   /// constraints if [useSafeArea] is `true`.
-  Widget decorateModal(
-    BuildContext context,
-    Widget modal,
-    bool useSafeArea,
-  ) =>
+  Widget decorateModal(BuildContext context, Widget modal, bool useSafeArea) =>
       useSafeArea ? SafeArea(child: modal) : modal;
 }

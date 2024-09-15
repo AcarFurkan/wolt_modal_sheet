@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:wolt_modal_sheet/src/content/components/main_content/wolt_modal_sheet_main_content.dart';
 import 'package:wolt_modal_sheet/src/content/components/main_content/wolt_modal_sheet_top_bar.dart';
 import 'package:wolt_modal_sheet/src/content/components/main_content/wolt_modal_sheet_top_bar_flow.dart';
@@ -11,7 +8,7 @@ import 'package:wolt_modal_sheet/src/content/components/paginating_group/paginat
 import 'package:wolt_modal_sheet/src/content/components/paginating_group/wolt_modal_sheet_page_transition_state.dart';
 import 'package:wolt_modal_sheet/src/content/wolt_modal_sheet_layout.dart';
 import 'package:wolt_modal_sheet/src/theme/wolt_modal_sheet_default_theme_data.dart';
-import 'package:wolt_modal_sheet/src/utils/soft_keyboard_closed_event.dart';
+import 'package:wolt_modal_sheet/src/utils/wolt_keyboard_closure_listener_mixin.dart';
 import 'package:wolt_modal_sheet/src/widgets/wolt_navigation_toolbar.dart';
 import 'package:wolt_modal_sheet/src/widgets/wolt_sticky_action_bar_wrapper.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
@@ -40,11 +37,12 @@ class WoltModalSheetAnimatedSwitcher extends StatefulWidget {
 
 class _WoltModalSheetAnimatedSwitcherState
     extends State<WoltModalSheetAnimatedSwitcher>
-    with TickerProviderStateMixin {
+    with
+        TickerProviderStateMixin,
+        WidgetsBindingObserver,
+        WoltKeyboardClosureListenerMixin {
   PaginatingWidgetsGroup? _incomingPageWidgets;
   PaginatingWidgetsGroup? _outgoingPageWidgets;
-
-  static const int _maxKeyboardAnimationDuration = 250;
 
   int get _pagesCount => widget.pages.length;
 
@@ -84,28 +82,9 @@ class _WoltModalSheetAnimatedSwitcherState
   ValueNotifier<double> get _currentPageScrollPosition =>
       _scrollPositions[_pageIndex];
 
-  /// Subscription for discovering the state of the soft-keyboard visibility
-  late StreamSubscription<bool> _softKeyboardVisibilitySubscription;
-
-  /// Value notifier for discovering when the soft-keyboard is dismissed. These events are
-  /// consumed by [WoltModalSheetTopBarFlow] and [WoltModalSheetTopBarTitleFlow] to trigger a
-  /// re-paint when keyboard is closing. This is needed to avoid the top bar from being stuck
-  /// when keyboard is closing.
-  ///
-  /// By default, the top bar visibility is synced with the scroll controller position. The
-  /// [WoltModalSheetTopBarFlow] and [WoltModalSheetTopBarTitleFlow] paints the top bar according
-  /// to the scroll position changes.
-  ///
-  /// When the keyboard appears the scroll controller receives scroll update events, which are
-  /// sent by the Flutter SDK. However, the keyboard closing events do not cause a change in the
-  /// scroll controller. Therefore, we need to manually trigger a re-paint when the keyboard is
-  /// closing.
-  final ValueNotifier<SoftKeyboardClosedEvent> _softKeyboardClosedNotifier =
-      ValueNotifier(const SoftKeyboardClosedEvent(eventId: 0));
-
   bool _isForwardMove = true;
 
-  bool? _shouldAnimatePagination;
+  late bool _shouldAnimatePagination;
 
   GlobalKey get _pageTitleKey => _titleKeys[_pageIndex];
 
@@ -116,7 +95,6 @@ class _WoltModalSheetAnimatedSwitcherState
     _resetScrollPositions();
     _resetScrollControllers();
     _subscribeToCurrentPageScrollPositionChanges();
-    _subscribeToSoftKeyboardClosedEvent();
   }
 
   void _resetGlobalKeys() {
@@ -130,7 +108,7 @@ class _WoltModalSheetAnimatedSwitcherState
   void _resetScrollPositions() {
     _scrollPositions.clear();
     _scrollPositions = [
-      for (int i = 0; i < _pagesCount; i++) ValueNotifier(0.0)
+      for (int i = 0; i < _pagesCount; i++) ValueNotifier(0.0),
     ];
   }
 
@@ -139,7 +117,7 @@ class _WoltModalSheetAnimatedSwitcherState
     _scrollControllers = [
       for (int i = 0; i < _pagesCount; i++)
         (_page.scrollController ??
-            ScrollController(initialScrollOffset: _scrollPositions[i].value))
+            ScrollController(initialScrollOffset: _scrollPositions[i].value)),
     ];
   }
 
@@ -152,22 +130,6 @@ class _WoltModalSheetAnimatedSwitcherState
         }
       });
     }
-  }
-
-  void _subscribeToSoftKeyboardClosedEvent() {
-    _softKeyboardVisibilitySubscription =
-        KeyboardVisibilityController().onChange.listen((bool visible) async {
-      if (!visible) {
-        /// Wait for closing soft keyboard animation to finish before emitting new value.
-        await Future.delayed(
-          const Duration(milliseconds: _maxKeyboardAnimationDuration),
-        );
-        final int lastEventId = _softKeyboardClosedNotifier.value.eventId;
-        final newEventId = lastEventId + 1;
-        _softKeyboardClosedNotifier.value =
-            SoftKeyboardClosedEvent(eventId: newEventId);
-      }
-    });
   }
 
   @override
@@ -206,54 +168,51 @@ class _WoltModalSheetAnimatedSwitcherState
     final outgoingWidgets = _outgoingPageWidgets;
     final animationController = _animationController;
     final animatePagination = _shouldAnimatePagination;
-
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      children: [
-        if (outgoingWidgets != null)
-          WoltModalSheetLayout(
-            paginatingWidgetsGroup: outgoingWidgets,
-            page: _page,
-            woltModalType: widget.woltModalType,
-            showDragHandle: widget.showDragHandle,
-          ),
-        if (incomingWidgets != null)
-          WoltModalSheetLayout(
-            paginatingWidgetsGroup: incomingWidgets,
-            page: _page,
-            woltModalType: widget.woltModalType,
-            showDragHandle: widget.showDragHandle,
-          ),
-        if (incomingWidgets != null &&
-            animationController != null &&
-            animatePagination != null &&
-            animatePagination &&
-            animationController.value != 1.0)
-          Offstage(
-            child: KeyedSubtree(
-              key: _incomingOffstagedMainContentKeys[_pageIndex],
-              child: incomingWidgets.offstagedMainContent,
+    final isAnimating = animationController != null &&
+        animatePagination &&
+        animationController.isAnimating &&
+        animationController.value != 1.0;
+    return AbsorbPointer(
+      absorbing: isAnimating,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          if (outgoingWidgets != null)
+            WoltModalSheetLayout(
+              paginatingWidgetsGroup: outgoingWidgets,
+              page: _page,
+              woltModalType: widget.woltModalType,
+              showDragHandle: widget.showDragHandle,
             ),
-          ),
-        if (outgoingWidgets != null &&
-            animationController != null &&
-            animatePagination != null &&
-            animatePagination &&
-            animationController.value != 1.0)
-          Offstage(
-            child: KeyedSubtree(
-              key: _outgoingOffstagedMainContentKeys[_pageIndex],
-              child: outgoingWidgets.offstagedMainContent,
+          if (incomingWidgets != null)
+            WoltModalSheetLayout(
+              paginatingWidgetsGroup: incomingWidgets,
+              page: _page,
+              woltModalType: widget.woltModalType,
+              showDragHandle: widget.showDragHandle,
             ),
-          ),
-      ],
+          if (incomingWidgets != null && isAnimating)
+            Offstage(
+              child: KeyedSubtree(
+                key: _incomingOffstagedMainContentKeys[_pageIndex],
+                child: incomingWidgets.offstagedMainContent,
+              ),
+            ),
+          if (outgoingWidgets != null && isAnimating)
+            Offstage(
+              child: KeyedSubtree(
+                key: _outgoingOffstagedMainContentKeys[_pageIndex],
+                child: outgoingWidgets.offstagedMainContent,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   @override
   void dispose() {
     _animationController?.dispose();
-    _softKeyboardVisibilitySubscription.cancel();
     for (final element in _scrollControllers) {
       element.dispose();
     }
@@ -270,27 +229,23 @@ class _WoltModalSheetAnimatedSwitcherState
     // We set the _shouldAnimatePagination to animate, which dictates whether the new page transition will be animated.
     _shouldAnimatePagination = animate;
 
+    final themeData = Theme.of(context).extension<WoltModalSheetThemeData>();
+    final defaultThemeData = WoltModalSheetDefaultThemeData(context);
+    final WoltModalSheetAnimationStyle animationStyle =
+        themeData?.animationStyle ?? defaultThemeData.animationStyle;
     // An AnimationController is created and attached to this State object (with 'this' as the vsync).
     _animationController = AnimationController(
-      duration: const Duration(
-          milliseconds: defaultWoltModalTransitionAnimationDuration),
+      duration: animationStyle.paginationAnimationStyle.paginationDuration,
       vsync: this,
-    )
-      // We also attach a status listener to the animation controller. When the animation is completed, it will trigger a state change.
-      ..addStatusListener((status) {
+    )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          setState(() {
-            _shouldAnimatePagination = null;
-            // We clear the _outgoingPageWidgets, which was storing the "outgoing" page (the page we're transitioning from)
-            _outgoingPageWidgets = null;
-            // We ensure that the animation controller's value is set to its upper bound (which should be 1.0)
-            _animationController?.value =
-                _animationController?.upperBound ?? 1.0;
-            // We dispose of the animation controller to free up resources as we're done with this animation
-            _animationController?.dispose();
-            // We also set the animation controller reference to null as it's no longer needed.
-            _animationController = null;
-          });
+          //  If the widget is disposed while the animation is still running calling setState
+          //  will throw an exception.
+          if (context.mounted) {
+            setState(() => _onPaginationAnimationComplete());
+          } else {
+            _onPaginationAnimationComplete();
+          }
         }
       });
 
@@ -317,8 +272,21 @@ class _WoltModalSheetAnimatedSwitcherState
     }
   }
 
+  void _onPaginationAnimationComplete() {
+    _shouldAnimatePagination = false;
+    // We clear the _outgoingPageWidgets, which was storing the "outgoing" page (the page we're transitioning from)
+    _outgoingPageWidgets = null;
+    // We ensure that the animation controller's value is set to its upper bound (which should be 1.0)
+    _animationController?.value = _animationController?.upperBound ?? 1.0;
+    // We dispose of the animation controller to free up resources as we're done with this animation
+    _animationController?.dispose();
+    // We also set the animation controller reference to null as it's no longer needed.
+    _animationController = null;
+  }
+
   PaginatingWidgetsGroup _createIncomingWidgets(
-      AnimationController animationController) {
+    AnimationController animationController,
+  ) {
     final themeData = Theme.of(context).extension<WoltModalSheetThemeData>();
     final defaultThemeData = WoltModalSheetDefaultThemeData(context);
     final hasTopBarLayer = _hasTopBarLayer;
@@ -349,7 +317,7 @@ class _WoltModalSheetAnimatedSwitcherState
           scrollController: _currentPageScrollController,
           titleKey: _pageTitleKey,
           topBarTitle: topBarTitle,
-          softKeyboardClosedListenable: _softKeyboardClosedNotifier,
+          softKeyboardClosedListenable: softKeyboardClosureListenable,
         );
       }
     }
@@ -390,7 +358,7 @@ class _WoltModalSheetAnimatedSwitcherState
                     page: _page,
                     scrollController: _currentPageScrollController,
                     titleKey: _pageTitleKey,
-                    softKeyboardClosedListenable: _softKeyboardClosedNotifier,
+                    softKeyboardClosedListenable: softKeyboardClosureListenable,
                   ))
             : const SizedBox.shrink(),
       ),

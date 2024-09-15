@@ -1,3 +1,38 @@
+## 0.9.2
+- Fixed URL of the example screenshot in the Readme file for pub.dev. [#291](https://github.com/woltapp/wolt_modal_sheet/pull/291) by [AcarFurkan](https://github.com/AcarFurkan)
+## 0.9.1
+- Fix the wrong link for the example screenshot in the Readme file. [#290](https://github.com/woltapp/wolt_modal_sheet/pull/290) by [ulusoyca](https://github.com/ulusoyca)
+## 0.9.0
+- Remove deprecated mainContentSlivers field in SliverWoltModalSheetPage [#286](https://github.com/woltapp/wolt_modal_sheet/pull/286) by [ulusoyca](https://github.com/ulusoyca)
+- Maintanence: Update README.md to improve DX [#285](https://github.com/woltapp/wolt_modal_sheet/pull/285) by [salihgueler](https://github.com/salihgueler)
+  - Fixes:
+    - [#284](https://github.com/woltapp/wolt_modal_sheet/issues/284) [DX] ☂️ Update the documentation on README.md and Example Apps
+- Enable drag to dismiss modal if the scroll position is at top edge [#283](https://github.com/woltapp/wolt_modal_sheet/pull/283) by [AcarFurkan](https://github.com/AcarFurkan)
+- Add topics and screenshots to pubspec.yaml [#281](https://github.com/woltapp/wolt_modal_sheet/pull/281) by [ulusoyca](https://github.com/ulusoyca)
+  - Fixes:
+    - [#255](https://github.com/woltapp/wolt_modal_sheet/issues/255) Add "topic" and "screenshot" to pubspec.yaml file to be visible in pub.dev
+- Prevent crashes during pagination and enable pagination duration configuration in animation style. [#280](https://github.com/woltapp/wolt_modal_sheet/pull/280) by [ulusoyca](https://github.com/ulusoyca)
+## 0.8.0
+- Fix: Consider directionality for pagination animation [#272](https://github.com/woltapp/wolt_modal_sheet/pull/272) by [ulusoyca](https://github.com/ulusoyca)
+  - Issue:
+    - [#266](https://github.com/woltapp/wolt_modal_sheet/issues/266) Transition direction for pages ( rtl - ltr )
+- Fix existing tests [#270](https://github.com/woltapp/wolt_modal_sheet/pull/270) by [TahaTesser](https://github.com/TahaTesser)
+- Breaking Change: Renamed WoltModalSheetRoute routeSettings to settings [#268](https://github.com/woltapp/wolt_modal_sheet/pull/268) by [durannumit](https://github.com/durannumit)
+  - Issue:
+    - [#198](https://github.com/woltapp/wolt_modal_sheet/issues/198) Rename [WoltModalSheetRoute.routeSettings] fields as [WoltModalSheetRoute.settings]
+- Breaking Change: Introduce modal and page content decorators [#267](https://github.com/woltapp/wolt_modal_sheet/pull/267) by [ulusoyca](https://github.com/ulusoyca)
+- Example app: Add attached sheet example to playground app [#265](https://github.com/woltapp/wolt_modal_sheet/pull/265) by [ABausG](https://github.com/ABausG)
+- Added source codes of example projects to Readme [#264](https://github.com/woltapp/wolt_modal_sheet/pull/264) by [durannumit](https://github.com/durannumit)
+  - Issue:
+    - [#263](https://github.com/woltapp/wolt_modal_sheet/issues/263) Add links to repositories in ReadMe for showcase apps.
+## 0.7.1
+- Fix: Dialog and bottom sheet minimum height is not respected to modal content min height [#260](https://github.com/woltapp/wolt_modal_sheet/pull/260) by [ulusoyca](https://github.com/ulusoyca)
+- Adjustment: Add Last Commit badge to readme [#258](https://github.com/woltapp/wolt_modal_sheet/pull/258) by [durannumit](https://github.com/durannumit)
+  - Fixes:
+    - [#256](https://github.com/woltapp/wolt_modal_sheet/issues/256) Add Last Commit badge to Readme
+- Feature: Extend close progress threshold for different types [#257](https://github.com/woltapp/wolt_modal_sheet/pull/257) by [durannumit](https://github.com/durannumit)
+  - Fixes:
+    - [#253](https://github.com/woltapp/wolt_modal_sheet/issues/253) Add closeProgressThreshold to default modal type constructor methods
 ## 0.7.0
 - Adjust dialog enter animation distance [#249](https://github.com/woltapp/wolt_modal_sheet/pull/249) by [ulusoyca](https://github.com/ulusoyca)
 - Adjustment: Readme updated for version 0.7.0 part 2 [#248](https://github.com/woltapp/wolt_modal_sheet/pull/248) by [durannumit](https://github.com/durannumit)
